@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <title>Unrupt calls</title>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+		<script src="https://www.webrtc-experiment.com/socket.io.js"> </script>
+		<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+		<script src="https://www.webrtc-experiment.com/CodecsHandler.js"></script>
+		<script src="BandwidthHandler.js"></script>
+        <script src="IceServersHandler.js"></script>
+		 <script src="conference.js"> </script>
+        <link rel="stylesheet" href="unrupt.css?v=1.1.4" type="text/css" />
+		<script src="screen.js"></script>
+		<script>
+     
+	   
+		</script>
+		
+    </head>
+
+    <body>
+        <h3 id="useragent"></h3>
+        <div class="alert alert-info" id="message_holder"></div>
+
+        <h1 id="title" class="text-center">
+            <a target="_blank" href="https://docs.google.com/document/d/1UAAJUiSZ99gehOnBDvY33yO4yRx-voZ71OsuZrqpiDY/edit">Readme</a>
+            -
+            <a href=".">Unrupt Demo with screenshare</a>
+            <div class="dropdown dropdown-inline">
+              <button class="btn btn-secondary btn-default dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                <!--<a class="dropdown-item" id="btnRemoteAudio" href="#">Toggle Unrupt Speakers</a>-->
+                <!--<a class="dropdown-item" id="btnResumeBuffer" href="#">Resume Buffer</a>-->
+                <!--<a class="dropdown-item" id="btnToggleConsoleOut" href="#">Toggle Console Output</a>-->
+                <a class="dropdown-item" id="btnVersion" href="#"><span id="version"></span></a>
+              </div>
+            </div>
+        </h1>
+        <div id="video-panel" class="container-panel">
+            <div class="video" id="otherUser" onclick="doPlay();">
+                <div id="pauseOther" class="playpause">
+                    <object data="pause.svg"></object>
+                </div>
+                <div class="video-holder" id="my-webcam">
+    <!--
+                    <span class="badge badge-person badge-secondary">
+                        You
+                    </span>
+                    <span id="nearscope-badge" class="badge badge-speak badge-secondary">Silent</span>
+                    <canvas id="nearscope">Scope</canvas>
+    -->
+                </div>
+                <div class="video-holder" id="other-webcam">
+    <!--
+                    <span class="badge badge-person badge-secondary">
+                        Other Person
+                    </span>
+                    <span id="farscope-badge" class="badge badge-speak badge-secondary">Silent</span>
+                    <canvas id="farscope">Scope</canvas>
+    -->
+                </div>
+            </div>
+
+        </div>
+		
+			
+        <div id="voice-panel" class="container-panel">
+            <div class="row">
+                <div class="col-4 card card-voice" id="card-voice-farscope">
+                    <div class="card-header buffer-label">Far <span id="farscope-badge" class="badge badge-secondary">Silent</span></div>
+                    <div class="card-body">
+                        <canvas id="farscope" >Scope</canvas>
+                    </div>
+                </div>
+                <div class="col-4 card card-voice" id="card-voice-earscope">
+                    <div class="card-header buffer-label">Play <span id="earscope-badge" class="badge badge-secondary">Silent</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="earscope" >Scope</canvas>
+                    </div>
+                </div>
+                <div class="col-4 card card-voice" id="card-voice-nearscope">
+                    <div class="card-header buffer-label">Near <span id="nearscope-badge" class="badge badge-secondary">Silent</span></div>
+                    <div class="card-body">
+                        <canvas id="nearscope" >Scope</canvas>
+                    </div>
+                </div>
+            </div>
+			 
+        </div>
+		
+		<section class="experiment">
+                <section class="hide-after-join" style="text-align: center;">                    
+                    <input type="text" id="room-name" placeholder="Enter " style="width: 80%; text-align: center; display: none;">
+                    <button id="share-screen" class="setup">Share Your Screen</button>
+                </section>
+
+                <!-- local/remote videos container -->
+                <div id="videos-container"></div>
+
+                <section id="unique-token" style="display: none; text-align: center; padding: 20px;"></section>
+            </section>
+			
+			 <script>
+			 var config = {
+                    
+                    openSocket: function(config) {
+                        var SIGNALING_SERVER = 'https://socketio-over-nodejs2.herokuapp.com:443/';
+
+                        config.channel = config.channel || location.href.replace(/\/|:|#|%|\.|\[|\]/g, '');
+                        var sender = Math.round(Math.random() * 999999999) + 999999999;
+
+                        io.connect(SIGNALING_SERVER).emit('new-channel', {
+                            channel: config.channel,
+                            sender: sender
+                        });
+
+                        var socket = io.connect(SIGNALING_SERVER + config.channel);
+                        socket.channel = config.channel;
+                        socket.on('connect', function () {
+                            if (config.callback) config.callback(socket);
+                        });
+
+                        socket.send = function (message) {
+                            socket.emit('message', {
+                                sender: sender,
+                                data: message
+                            });
+                        };
+
+                        socket.on('message', config.onmessage);
+                    },
+                    onRemoteStream: function(media) {
+                        if(isbroadcaster) return;
+
+                        var video = media.video;
+                        videosContainer.insertBefore(video, videosContainer.firstChild);
+                        rotateVideo(video);
+
+                        document.querySelector('.hide-after-join').style.display = 'none';
+                    },
+                    onRoomFound: function(room) {
+                        if(isbroadcaster) return;
+
+                        conferenceUI.joinRoom({
+                            roomToken: room.roomToken,
+                            joinUser: room.broadcaster
+                        });
+
+                        document.querySelector('.hide-after-join').innerHTML = '<img src="key-press.gif" style="margint-top:10px; width:50%;" />';
+                    },
+                    onNewParticipant: function(numberOfParticipants) {
+                        var text = numberOfParticipants + ' users are viewing your screen!';
+                        
+                        if(numberOfParticipants <= 0) {
+                            text = 'No one is viewing your screen YET.';
+                        }
+                        else if(numberOfParticipants == 1) {
+                            text = 'Only one user is viewing your screen!';
+                        }
+
+                        document.title = text;
+                        showErrorMessage(document.title, 'green');
+                    },
+                    oniceconnectionstatechange: function(state) {
+                        var text = '';
+
+                        if(state == 'closed' || state == 'disconnected') {
+                            text = 'One of the participants just left.';
+                            document.title = text;
+                            showErrorMessage(document.title);
+                        }
+
+                        if(state == 'failed') {
+                            text = 'Failed to bypass Firewall rules. It seems that target user did not receive your screen. Please ask him reload the page and try again.';
+                            document.title = text;
+                            showErrorMessage(document.title);
+                        }
+
+                        if(state == 'connected' || state == 'completed') {
+                            text = 'A user successfully received your screen.';
+                            document.title = text;
+                            showErrorMessage(document.title, 'green');
+                        }
+
+                        if(state == 'new' || state == 'checking') {
+                            text = 'Someone is trying to join you.';
+                            document.title = text;
+                            showErrorMessage(document.title, 'green');
+                        }
+                    }
+                };
+
+                function showErrorMessage(error, color) {
+                    var errorMessage = document.querySelector('#logs-message');
+                    errorMessage.style.color = color || 'red';
+                    errorMessage.innerHTML = error;
+                    errorMessage.style.display = 'block';
+                }
+
+                function getDisplayMediaError(error) {
+                    if (location.protocol === 'http:') {
+                        showErrorMessage('Please test this WebRTC experiment on HTTPS.');
+                    } else {
+                        showErrorMessage(error.toString());
+                    }
+                }
+
+                function captureUserMedia(callback) {
+                    var video = document.createElement('video');
+                    video.muted = true;
+                    video.volume = 0;
+                    try {
+                        video.setAttributeNode(document.createAttribute('autoplay'));
+                        video.setAttributeNode(document.createAttribute('playsinline'));
+                        video.setAttributeNode(document.createAttribute('controls'));
+                    } catch (e) {
+                        video.setAttribute('autoplay', true);
+                        video.setAttribute('playsinline', true);
+                        video.setAttribute('controls', true);
+                    }
+
+                    if(navigator.getDisplayMedia || navigator.mediaDevices.getDisplayMedia) {
+                        function onGettingSteam(stream) {
+                            video.srcObject = stream;
+                            videosContainer.insertBefore(video, videosContainer.firstChild);
+
+                            addStreamStopListener(stream, function() {
+                                location.reload();
+                            });
+
+                            config.attachStream = stream;
+                            callback && callback();
+                            rotateVideo(video);
+
+                            addStreamStopListener(stream, function() {
+                                location.reload();
+                            });
+
+                            showPrivateLink();
+
+                            document.querySelector('.hide-after-join').style.display = 'none';
+                        }
+
+                        if(navigator.mediaDevices.getDisplayMedia) {
+                            navigator.mediaDevices.getDisplayMedia({video: true}).then(stream => {
+                                onGettingSteam(stream);
+                            }, getDisplayMediaError).catch(getDisplayMediaError);
+                        }
+                        else if(navigator.getDisplayMedia) {
+                            navigator.getDisplayMedia({video: true}).then(stream => {
+                                onGettingSteam(stream);
+                            }, getDisplayMediaError).catch(getDisplayMediaError);
+                        }
+                    }
+                    else {
+                        if (DetectRTC.browser.name === 'Chrome') {
+                            if (DetectRTC.browser.version == 71) {
+                                showErrorMessage('Please enable "Experimental WebPlatform" flag via chrome://flags.');
+                            } else if (DetectRTC.browser.version < 71) {
+                                showErrorMessage('Please upgrade your Chrome browser.');
+                            } else {
+                                showErrorMessage('Please make sure that you are not using Chrome on iOS.');
+                            }
+                        }
+
+                        if (DetectRTC.browser.name === 'Firefox') {
+                            showErrorMessage('Please upgrade your Firefox browser.');
+                        }
+
+                        if (DetectRTC.browser.name === 'Edge') {
+                            showErrorMessage('Please upgrade your Edge browser.');
+                        }
+
+                        if (DetectRTC.browser.name === 'Safari') {
+                            showErrorMessage('Safari does NOT supports getDisplayMedia API yet.');
+                        }
+                    }
+                }
+
+                /* on page load: get public rooms */
+                var conferenceUI = conference(config);
+
+                /* UI specific */
+                var videosContainer = document.getElementById("videos-container") || document.body;
+
+                document.getElementById('share-screen').onclick = function() {
+                    var roomName = document.getElementById('room-name') || { };
+                    roomName.disabled = true;
+                    captureUserMedia(function() {
+                        conferenceUI.createRoom({
+                            roomName: (roomName.value || 'Anonymous') + ' shared his screen with you'
+                        });
+                    });
+                    this.disabled = true;
+                };
+
+                function rotateVideo(video) {
+                    video.style[navigator.mozGetUserMedia ? 'transform' : '-webkit-transform'] = 'rotate(0deg)';
+                    setTimeout(function() {
+                        video.style[navigator.mozGetUserMedia ? 'transform' : '-webkit-transform'] = 'rotate(360deg)';
+                    }, 1000);
+                }
+
+                function showPrivateLink() {
+                    var uniqueToken = document.getElementById('unique-token');
+                    uniqueToken.innerHTML = '<a href="' + location.href + '" target="_blank">Copy & Share This Private Room Link</a>';
+                    uniqueToken.style.display = 'block';
+                }
+
+            
+			 </script>
+
+        <div class="container">
+            <div class="progress buffer-length">
+                <div id="unruptbuffer_spk" class="progress-bar progress-bar-striped bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                <div id="unruptbuffer_sil" class="progress-bar " role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="buffer-length buffer-info">
+                <span id="mode" class="badge badge-primary pull-left">Direct</span>
+                <span id="unruptbuffer_len" class="badge pull-right"></span>
+            </div>
+            <div id="chosenAction">
+                <button id="action" type="button" class="btn btn-primary">
+                    <i class="fas fa-phone-slash fa-2x" aria-hidden="true"></i>
+                </button>
+                <button id="pause" type="button" class="btn btn-primary">
+                    <i id="pauseIcon" class="fa fa-play-circle fa-2x" aria-hidden="true"></i>
+                </button>
+                <button id="chooseActionVideo" type="button" class="btn btn-primary">
+                    <i id="videoOff" class="fa fa-video-slash fa-2x" aria-hidden="true"></i>
+                </button>
+                <button id="mute" type="button" class="btn btn-primary">
+                    <i id="muteIcon" class="fa fa-microphone fa-2x" aria-hidden="true"></i>
+                </button>
+                <button id="unruptToggle" type="button" class="btn btn-primary">
+                    <i id="pwsIcon" class="fas fa-exchange-alt fa-2x" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!--  Start Modals     -->
+        <div id="share" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Share this url to request a call</h5>
+                    </div>
+                    <div class="modal-body" id="shareQR">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button id="shareDone" type="button" class="btn btn-secondary" data-dismiss="modal" onclick="shared();">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="accept" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Accept a call</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Click 'accept' to start the call.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="callAccept" type="button" class="btn btn-secondary" data-dismiss="modal" onclick="accepted();">Accept</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--  End Modals      -->
+
+        <input type="hidden" id="unrupturl" />
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://pi.pe/iot/js/qrcode.js"></script>
+        <script src="properties.js?v=1.1.2"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="unrupt.js?v=1.1.7"></script>
+		
+    </body>
+
+</html>
