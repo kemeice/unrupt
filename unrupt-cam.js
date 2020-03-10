@@ -790,11 +790,17 @@ $(document).on('click', "#chooseActionVideo", function () {
 $(document).on('click', "#chooseActionVideo2", function () {
     
 	shouldFaceUser = !shouldFaceUser;
-	//localStream.getTracks().forEach(t => {
-    //t.stop();});
-	setupAudio()
-	//shared();
-	
+	localStream.getTracks().forEach(t => {
+    t.stop();});
+	var gumConstraints = {
+        audio: true,
+        video: videoEnabled 
+    };
+	gumConstraints.video = { facingMode: shouldFaceUser ? 'user' : 'environment' }
+	 navigator.mediaDevices.getUserMedia(gumConstraints)
+	 
+	$("body").attr("has-video", videoEnabled);
+    localStream.getVideoTracks()[0].enabled = videoEnabled;
 	//turnOffVideo();
 	
 	
