@@ -790,9 +790,9 @@ $(document).on('click', "#chooseActionVideo", function () {
 $(document).on('click', "#chooseActionVideo2", function () {
     
 	shouldFaceUser = !shouldFaceUser;
-	localStream.getTracks().forEach(t => {
-    t.stop();});
-	shared()
+	//localStream.getTracks().forEach(t => {
+    //t.stop();});
+	setupAudio()
 	//shared();
 	
 	//turnOffVideo();
