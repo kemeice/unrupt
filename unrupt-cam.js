@@ -793,8 +793,8 @@ $(document).on('click', "#chooseActionVideo2", function () {
 	localStream.getTracks().forEach(t => {
     t.stop();});
 	
-	shared();
-	
+	setupAudio();
+	 
 	
 });
 
