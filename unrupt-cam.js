@@ -672,6 +672,7 @@ function getMID() {
 
 /**
  * Save the cid and mid as key-value pairs in localStorage.
+ 
  * @param {string} id - mid or current user id
  */
 function saveMID(id){
@@ -695,10 +696,15 @@ function setRole() {
     if ( cid != undefined ){
         cid = cid.replace("#", "");
     }
-    mid = localStorage['unruptId'];
+	 mid = localStorage['unruptId'];
     console.log('URL unrupt ID:', cid);
     console.log('localStorage unrupt ID:', mid);
-    if (!mid) {
+	
+    console.log('URL unrupt ID:', cid);
+    console.log('localStorage unrupt ID:', mid);
+    if (!mid ) {
+	//if (!mid || mid =='undefined' ) {
+		//alert('midnotfound');
         var array = new Uint32Array(8);
         window.crypto.getRandomValues(array);
         var hexCodes = [];
@@ -713,6 +719,8 @@ function setRole() {
             hexCodes.push(paddedValue);
         }
         mid = hexCodes.join("").toLowerCase();
+		//alert('mid');
+		//alert(mid);
         console.log("mid =", mid);
         localStorage['unruptId'] = mid;
     }
@@ -785,7 +793,12 @@ $(document).on('click', "#chooseActionVideo", function () {
 });
 
 
-
+$(document).on('click', "#newcon", function () {
+	localStorage['unruptId']=undefined;
+	 delete(localStorage['unruptId']);
+	 location.reload();
+   
+});
 
 $(document).on('click', "#chooseActionVideo2", function () {
     
@@ -1021,7 +1034,10 @@ $(document).ready(function () {
     var unrupturltag = $("#unrupturl");
     unrupturltag.val(window.location.href)
     var clipboard = new Clipboard('.unrupt-action-btn');
-
+    var id = $.getUrlVar("unruptId");
+	localStorage.setItem(id, id);
+	console.log("local storage key is ", id);
+	 
 
     clipboard.on('success', function (e) {
         //
