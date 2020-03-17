@@ -792,15 +792,19 @@ $(document).on('click', "#chooseActionVideo", function () {
     turnOffVideo();
 });
 
-
-$(document).on('click', "#version", function () {
+function newconvo()
+{
 	localStorage['unruptId']=undefined;
 	 delete(localStorage['unruptId']);
 	 window.location = window.location.href.split("?")[0];
+}
 
+//$(document).on('click', "#version", function () {
+	
+//newconvo();
 
    
-});
+//});
 
 $(document).on('click', "#chooseActionVideo2", function () {
     
