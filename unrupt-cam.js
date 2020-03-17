@@ -796,7 +796,9 @@ $(document).on('click', "#chooseActionVideo", function () {
 $(document).on('click', "#newcon", function () {
 	localStorage['unruptId']=undefined;
 	 delete(localStorage['unruptId']);
-	 location.reload();
+	 window.location = window.location.href.split("?")[0];
+
+
    
 });
 
