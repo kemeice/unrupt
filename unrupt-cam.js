@@ -799,12 +799,12 @@ function newconvo()
 	 window.location = window.location.href.split("?")[0];
 }
 
-//$(document).on('click', "#version", function () {
-	
-//newconvo();
+$(document).on('click', "#newcon", function () {
+	url= window.location.hostname;
+	window.location.replace(url);
 
-   
-//});
+
+   });
 
 $(document).on('click', "#chooseActionVideo2", function () {
     
